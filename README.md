@@ -1,12 +1,17 @@
 # nxp-pn5xx
-This is a fork of NXP's NFC Open Source Kernel mode driver that adds support for ACPI.
 
+Kernel driver for the NXP NPC300 NFC chip found in many ThinkPad models (T470, T480, T480s, X280, X1 Carbon Gen 6+, X1 Yoga Gen 3, X1 Yoga Gen 8). Any model containing Lenovo part number **01AX745** should be supported. This is a fork of NXP's upstream pn5xx driver with added ACPI support for the `NXP1001` hardware ID used by Lenovo.
 
-As of mid-2018, many ThinkPad models include the NXP NPC300 chip for NFC. Although valid ACPI information is made available, the official driver does unfortunately not make use of it so the device does not work.
+Requires Linux **≥ 3.17**.
 
+## What it does
 
-Currently, this fork only supports the bare minimum of configuration to make the NFC chip work (IRQ pin and VEN pin). I tested it on a Thinkpad T480s running Ubuntu 18.04 with kernel 4.15. According to reports, at the very least the T470 and Carbon X1C should also be supported. However, this is still an unofficial modification so USE AT YOUR OWN RISK. If the GPIO pins are configured wrong, you can potentially damage other components attached to them.
+Exposes the chip as `/dev/pn544`. GPIO configuration is sourced automatically from either ACPI (x86 ThinkPads) or a Device Tree node (embedded) - see `sample_devicetree.txt` for a DT example. The DT binding supports optional `firmware-gpios` and `clkreq-gpios` in addition to the required `interrupt-gpios` and `enable-gpios`.
 
+## Userland
 
-### Known issues
-On my device, the touchpad becomes slow and unprecise as soon as I use the NFC chip. If anyone has any ideas what could be causing this and how to fix it, please open an issue.
+Use <https://github.com/StarGate01/linux_libnfc-nci> with the kernel driver (I2C mode). Build with `--enable-i2c` - that flag makes the HAL use `/dev/pn544` via this driver.
+
+## Known issues
+
+On some older models (T480s with Elan touchpad) the touchpad becomes laggy while the NFC driver is active. This is a conflict at the I2C bus level between the touchpad and NFC drivers, not a bug in this driver. Suspending and resuming the system restores normal touchpad behaviour.
